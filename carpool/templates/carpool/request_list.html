@@ -1,34 +1,83 @@
 {% extends "carpool/base.html" %}
-{% block title %}My Requests{% endblock %}
+{% block title %}My Requests — RideShare{% endblock %}
 {% block content %}
-    <h2>My Carpool Requests</h2>
-    <a href="/requests/create">+ New Request</a>
-    <hr>
-    {% if requests %}
-        {% for req in requests %}
-            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
-                <strong>{{ req.pickup_node }} → {{ req.dropoff_node }}</strong><br>
-                Status: {{ req.status }}<br>
-                <strong>Offers:</strong><br>
-                {% for offer in req.offers.all %}
-                    <div style="margin-left:20px; border-left:3px solid #aaa; padding-left:10px;">
-                        Driver: {{ offer.trip.driver.username }}<br>
-                        Detour: {{ offer.detour_nodes }} nodes<br>
-                        Fare: ${{ offer.fare }}<br>
-                        Offer Status: {{ offer.status }}<br>
-                        {% if offer.status == 'pending' and req.status == 'pending' %}
-                            <a href="/requests/confirm/{{ offer.id }}">Confirm this offer</a>
-                        {% endif %}
+
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
+    <div class="page-header" style="margin:0;">
+        <h2>My Requests</h2>
+        <p>Track your carpool requests and offers</p>
+    </div>
+    <a href="/requests/create" class="btn btn-primary">+ New Request</a>
+</div>
+
+{% if requests %}
+    {% for req in requests %}
+        <div class="card">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                <div>
+                    <div class="route" style="font-size:1.05rem; font-family:'Syne',sans-serif; margin-bottom:8px;">
+                        <span>{{ req.pickup_node }}</span>
+                        <span class="route-arrow">→</span>
+                        <span>{{ req.dropoff_node }}</span>
                     </div>
-                {% empty %}
-                    <p style="margin-left:20px;">No offers yet.</p>
-                {% endfor %}
+                    {% if req.status == 'active' %}
+                        <span class="badge badge-active">{{ req.status }}</span>
+                    {% elif req.status == 'pending' %}
+                        <span class="badge badge-pending">{{ req.status }}</span>
+                    {% elif req.status == 'cancelled' %}
+                        <span class="badge badge-cancelled">{{ req.status }}</span>
+                    {% else %}
+                        <span class="badge badge-completed">{{ req.status }}</span>
+                    {% endif %}
+                </div>
                 {% if req.status == 'pending' %}
-                    <a href="/requests/{{ req.id }}/cancel">Cancel Request</a>
+                    <a href="/requests/{{ req.id }}/cancel" class="btn btn-danger btn-sm">Cancel</a>
                 {% endif %}
             </div>
-        {% endfor %}
-    {% else %}
-        <p>No requests yet.</p>
-    {% endif %}
+
+            {% if req.offers.all %}
+                <hr class="divider" style="margin:1rem 0;">
+                <div style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-bottom:0.75rem;">Offers</div>
+
+                {% for offer in req.offers.all %}
+                    <div style="background:var(--surface2); border-radius:var(--radius-sm); padding:1rem; margin-bottom:0.75rem; border-left:3px solid {% if offer.status == 'pending' %}var(--warning){% elif offer.status == 'confirmed' %}var(--accent){% else %}var(--text-dim){% endif %};">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                            <div>
+                                <div style="font-weight:600; margin-bottom:4px;">🚗 {{ offer.trip.driver.username }}</div>
+                                <div style="font-size:0.84rem; color:var(--text-muted); display:flex; gap:1rem; flex-wrap:wrap;">
+                                    <span>Detour: <strong style="color:var(--text);">{{ offer.detour_nodes }} nodes</strong></span>
+                                    <span>Fare: <strong style="color:var(--accent);">${{ offer.fare }}</strong></span>
+                                    <span>Status:
+                                        {% if offer.status == 'pending' %}
+                                            <span class="badge badge-pending" style="font-size:0.7rem;">{{ offer.status }}</span>
+                                        {% elif offer.status == 'confirmed' %}
+                                            <span class="badge badge-active" style="font-size:0.7rem;">{{ offer.status }}</span>
+                                        {% else %}
+                                            <span class="badge" style="font-size:0.7rem;">{{ offer.status }}</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            {% if offer.status == 'pending' and req.status == 'pending' %}
+                                <a href="/requests/confirm/{{ offer.id }}" class="btn btn-primary btn-sm">Confirm</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div style="margin-top:1rem; padding:0.75rem 1rem; background:var(--surface2); border-radius:var(--radius-sm); font-size:0.85rem; color:var(--text-muted); text-align:center;">
+                    ⏳ Waiting for driver offers...
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="text-align:center; padding:3rem; color:var(--text-muted);">
+        <div style="font-size:2.5rem; margin-bottom:1rem;">📍</div>
+        <div style="font-weight:600; margin-bottom:0.3rem;">No requests yet</div>
+        <div style="font-size:0.88rem; margin-bottom:1.5rem;">Create your first carpool request to get started</div>
+        <a href="/requests/create" class="btn btn-primary">+ Request a Carpool</a>
+    </div>
+{% endif %}
+
 {% endblock %}

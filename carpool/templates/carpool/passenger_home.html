@@ -1,12 +1,28 @@
 {% extends "carpool/base.html" %}
-{% block title %}Passenger Home{% endblock %}
+{% block title %}Home — RideShare{% endblock %}
 {% block content %}
-    <h2>Welcome, {{ user.username }}!</h2>
-    <hr>
-    <h3>Quick Links</h3>
-    <ul>
-        <li><a href="/requests/create">Request a Carpool</a></li>
-        <li><a href="/requests">My Requests</a></li>
-        <li><a href="/wallet">My Wallet</a></li>
-    </ul>
+
+<div class="page-header">
+    <h2>Hey, {{ user.username }} 👋</h2>
+    <p>Where are you headed today?</p>
+</div>
+
+<div class="quick-links">
+    <a href="/requests/create" class="quick-link-card" style="grid-column: span 2; background: linear-gradient(135deg, rgba(74,222,128,0.08), rgba(34,211,238,0.04)); border-color: rgba(74,222,128,0.2);">
+        <div class="quick-link-icon">📍</div>
+        <div class="quick-link-title">Request a Carpool</div>
+        <div class="quick-link-desc">Find a driver going your way</div>
+    </a>
+    <a href="/requests" class="quick-link-card">
+        <div class="quick-link-icon">📋</div>
+        <div class="quick-link-title">My Requests</div>
+        <div class="quick-link-desc">View & manage your ride requests</div>
+    </a>
+    <a href="/wallet" class="quick-link-card">
+        <div class="quick-link-icon">💳</div>
+        <div class="quick-link-title">My Wallet</div>
+        <div class="quick-link-desc">Balance & transaction history</div>
+    </a>
+</div>
+
 {% endblock %}

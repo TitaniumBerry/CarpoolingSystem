@@ -1,20 +1,425 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{% block title %}Carpooling{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RideShare{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #161a24;
+            --surface2: #1e2333;
+            --border: rgba(255,255,255,0.07);
+            --accent: #4ade80;
+            --accent2: #22d3ee;
+            --accent-dim: rgba(74, 222, 128, 0.12);
+            --text: #f0f2f7;
+            --text-muted: #7a8499;
+            --text-dim: #4a5568;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --radius: 14px;
+            --radius-sm: 8px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 20% -10%, rgba(74,222,128,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 85% 110%, rgba(34,211,238,0.05) 0%, transparent 55%);
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+            background: rgba(13,15,20,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-logo {
+            width: 34px;
+            height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-user {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-badge {
+            font-size: 0.7rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(74,222,128,0.2);
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            transition: all 0.18s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--text);
+            background: var(--surface);
+        }
+
+        .btn-nav-primary {
+            background: var(--accent) !important;
+            color: #0d0f14 !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            padding: 8px 16px !important;
+        }
+
+        .btn-nav-primary:hover {
+            background: #6ee7a0 !important;
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255,255,255,0.13);
+        }
+
+        .card + .card { margin-top: 1rem; }
+
+        /* ── FORMS ── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.4rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            appearance: none;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8499' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 2.5rem;
+        }
+
+        input:focus, select:focus {
+            border-color: rgba(74,222,128,0.4);
+            box-shadow: 0 0 0 3px rgba(74,222,128,0.08);
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.93rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.18s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #0d0f14;
+        }
+
+        .btn-primary:hover {
+            background: #6ee7a0;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(74,222,128,0.25);
+        }
+
+        .btn-ghost {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            border-color: rgba(255,255,255,0.18);
+            background: var(--surface);
+        }
+
+        .btn-danger {
+            background: rgba(248,113,113,0.1);
+            color: var(--danger);
+            border: 1px solid rgba(248,113,113,0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(248,113,113,0.18);
+        }
+
+        .btn-sm {
+            padding: 0.45rem 0.9rem;
+            font-size: 0.83rem;
+        }
+
+        /* ── ALERTS ── */
+        .alert {
+            padding: 0.85rem 1.1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-error {
+            background: rgba(248,113,113,0.1);
+            border: 1px solid rgba(248,113,113,0.25);
+            color: var(--danger);
+        }
+
+        /* ── STATUS BADGES ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-active    { background: rgba(74,222,128,0.1);  color: var(--accent);  border: 1px solid rgba(74,222,128,0.2); }
+        .badge-pending   { background: rgba(251,191,36,0.1);  color: var(--warning); border: 1px solid rgba(251,191,36,0.2); }
+        .badge-cancelled { background: rgba(248,113,113,0.1); color: var(--danger);  border: 1px solid rgba(248,113,113,0.2); }
+        .badge-completed { background: rgba(34,211,238,0.1);  color: var(--accent2); border: 1px solid rgba(34,211,238,0.2); }
+
+        /* ── DIVIDER ── */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 1.5rem 0;
+        }
+
+        /* ── LINK BUTTON ── */
+        a.btn { display: inline-flex; }
+
+        /* ── QUICK LINK GRID ── */
+        .quick-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .quick-link-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.4rem;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quick-link-card:hover {
+            border-color: rgba(74,222,128,0.3);
+            background: linear-gradient(135deg, var(--surface), rgba(74,222,128,0.03));
+            transform: translateY(-2px);
+        }
+
+        .quick-link-icon {
+            font-size: 1.6rem;
+        }
+
+        .quick-link-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .quick-link-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ── ROUTE DISPLAY ── */
+        .route {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .route-arrow {
+            color: var(--accent);
+            font-size: 0.8rem;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            .quick-links { grid-template-columns: 1fr; }
+            .page-wrapper { padding: 1.5rem 1rem 3rem; }
+            .page-header h2 { font-size: 1.6rem; }
+            nav { padding: 0 1rem; }
+        }
+    </style>
+    {% block extra_styles %}{% endblock %}
 </head>
 <body>
     <nav>
-        {% if user.is_authenticated %}
-            <span>Hello, {{ user.username }} ({{ user.role }})</span>
-            <a href="/wallet">Wallet</a> |
-            <a href="/logout">Logout</a>
-        {% else %}
-            <a href="/login">Login</a> |
-            <a href="/signup">Signup</a>
-        {% endif %}
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">🚗</div>
+            <span class="nav-title">RideShare</span>
+        </a>
+        <div class="nav-right">
+            {% if user.is_authenticated %}
+                <span class="nav-user">
+                    {{ user.username }}
+                    <span class="nav-badge">{{ user.role }}</span>
+                </span>
+                <a href="/wallet">💳 Wallet</a>
+                <a href="/logout">Logout</a>
+            {% else %}
+                <a href="/login">Login</a>
+                <a href="/signup" class="btn-nav-primary">Sign up</a>
+            {% endif %}
+        </div>
     </nav>
-    <hr>
-    {% block content %}{% endblock %}
+
+    <div class="page-wrapper">
+        {% block content %}{% endblock %}
+    </div>
 </body>
 </html>

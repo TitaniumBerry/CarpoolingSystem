@@ -1,29 +1,47 @@
 {% extends "carpool/base.html" %}
-{% block title %}Incoming Requests{% endblock %}
+{% block title %}Incoming Requests — RideShare{% endblock %}
 {% block content %}
-    <h2>Incoming Carpool Requests</h2>
-    {% if error %}
-        <p style="color:red;">{{ error }}</p>
-    {% endif %}
-    {% if trip %}
-        <p>Active Trip: {{ trip.start_node }} → {{ trip.end_node }}</p>
-    {% endif %}
-    <hr>
-    {% if incoming_requests %}
-        {% for req in incoming_requests %}
-            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
-                <strong>Passenger:</strong> {{ req.passenger.username }}<br>
-                <strong>Pickup:</strong> {{ req.pickup_node }}<br>
-                <strong>Dropoff:</strong> {{ req.dropoff_node }}<br>
-                <form method="get" action="/driver/requests/{{ req.id }}/offer">
-                    <button type="submit">Make Offer</button>
-                </form>
-            </div>
-        {% empty %}
-            <p>No incoming requests nearby.</p>
-        {% endfor %}
-    {% else %}
-        <p>No incoming requests nearby.</p>
-    {% endif %}
-{% endblock %}
 
+<div class="page-header">
+    <h2>Incoming Requests</h2>
+    {% if trip %}
+        <p>Active trip: <span class="route"><span>{{ trip.start_node }}</span><span class="route-arrow">→</span><span>{{ trip.end_node }}</span></span></p>
+    {% else %}
+        <p>Passengers near your route</p>
+    {% endif %}
+</div>
+
+{% if error %}
+    <div class="alert alert-error">⚠ {{ error }}</div>
+{% endif %}
+
+{% if incoming_requests %}
+    {% for req in incoming_requests %}
+        <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <div style="width:42px; height:42px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
+                    🧍
+                </div>
+                <div>
+                    <div style="font-weight:600; font-family:'Syne',sans-serif; margin-bottom:2px;">{{ req.passenger.username }}</div>
+                    <div class="route" style="font-size:0.88rem; color:var(--text-muted);">
+                        <span>{{ req.pickup_node }}</span>
+                        <span class="route-arrow">→</span>
+                        <span>{{ req.dropoff_node }}</span>
+                    </div>
+                </div>
+            </div>
+            <form method="get" action="/driver/requests/{{ req.id }}/offer">
+                <button type="submit" class="btn btn-primary btn-sm">Make Offer</button>
+            </form>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="text-align:center; padding:3rem; color:var(--text-muted);">
+        <div style="font-size:2.5rem; margin-bottom:1rem;">🔍</div>
+        <div style="font-weight:600; margin-bottom:0.3rem;">No requests nearby</div>
+        <div style="font-size:0.88rem;">Check back once your trip is active</div>
+    </div>
+{% endif %}
+
+{% endblock %}

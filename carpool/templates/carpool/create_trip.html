@@ -1,30 +1,50 @@
 {% extends "carpool/base.html" %}
-{% block title %}Create Trip{% endblock %}
+{% block title %}Publish Trip — RideShare{% endblock %}
 {% block content %}
-    <h2>Publish a New Trip</h2>
+
+<div style="max-width:480px; margin:0 auto;">
+    <div class="page-header">
+        <h2>Publish a Trip</h2>
+        <p>Set your route and offer seats to passengers</p>
+    </div>
+
     {% if error %}
-        <p style="color:red;">{{ error }}</p>
+        <div class="alert alert-error">⚠ {{ error }}</div>
     {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        <label>Start Node</label><br>
-        <select name="start_node">
-            {% for node in nodes %}
-                <option value="{{ node.id }}">{{ node.name }}</option>
-            {% endfor %}
-        </select><br><br>
 
-        <label>End Node</label><br>
-        <select name="end_node">
-            {% for node in nodes %}
-                <option value="{{ node.id }}">{{ node.name }}</option>
-            {% endfor %}
-        </select><br><br>
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
 
-        <label>Max Passengers</label><br>
-        <input type="number" name="max_passengers" value="3" min="1" max="10"><br><br>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.4rem;">
+                <div class="form-group" style="margin:0;">
+                    <label>Start Node</label>
+                    <select name="start_node">
+                        {% for node in nodes %}
+                            <option value="{{ node.id }}">{{ node.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>End Node</label>
+                    <select name="end_node">
+                        {% for node in nodes %}
+                            <option value="{{ node.id }}">{{ node.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
 
-        <button type="submit">Publish Trip</button>
-    </form>
+            <div class="form-group" style="margin-bottom:1.8rem;">
+                <label>Max Passengers</label>
+                <input type="number" name="max_passengers" value="3" min="1" max="10">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                🗺️ Publish Trip
+            </button>
+        </form>
+    </div>
+</div>
+
 {% endblock %}
-
