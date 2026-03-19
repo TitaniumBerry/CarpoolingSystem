@@ -48,8 +48,8 @@
                     </div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:{% if t.transaction_type == 'topup' %}var(--accent){% else %}var(--danger){% endif %};">
-                        {% if t.transaction_type == 'topup' %}+{% else %}−{% endif %}${{ t.amount }}
+                    <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:{% if t.transaction_type == 'topup' or t.transaction_type == 'driver_earning' %}var(--accent){% else %}var(--danger){% endif %};">
+                        {% if t.transaction_type == 'topup' or t.transaction_type == 'driver_earning' %}+{% else %}−{% endif %}${{ t.amount }}
                     </div>
                     <div style="font-size:0.78rem; color:var(--text-muted);">{{ t.created_at }}</div>
                 </div>
