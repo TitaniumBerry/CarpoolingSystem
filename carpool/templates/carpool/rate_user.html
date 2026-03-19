@@ -2,12 +2,12 @@
 {% block title %}Rate {{ ratee.username }} — RideShare{% endblock %}
 {% block content %}
 
-<div style="max-width:480px; margin:0 auto;">
+<div style="max-width:520px; margin:0 auto;">
     <div class="page-header" style="text-align:center; margin-bottom:2rem;">
         <div style="width:64px; height:64px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1rem;">
             🧍
         </div>
-        <h2>Rate {{ ratee.username }}</h2>
+        <h2 style="word-break:break-word; overflow-wrap:anywhere; font-size:clamp(1.3rem, 5vw, 2rem);">Rate {{ ratee.username }}</h2>
         <p>How was your experience?</p>
     </div>
 
@@ -22,7 +22,7 @@
             <!-- Star Rating -->
             <div class="form-group">
                 <label>Your Rating</label>
-                <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:4px;">
+                <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:4px; min-width:0;">
                     {% for i in "12345" %}
                         <label style="all:unset; cursor:pointer;">
                             <input type="radio" name="score" value="{{ i }}" style="display:none;"
@@ -31,7 +31,7 @@
                                 background:var(--surface2);
                                 border:1px solid var(--border);
                                 border-radius:var(--radius-sm);
-                                padding:0.75rem 0.5rem;
+                                padding:0.65rem 0.25rem;
                                 text-align:center;
                                 transition:all 0.15s ease;
                                 cursor:pointer;
