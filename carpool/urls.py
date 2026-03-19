@@ -20,7 +20,9 @@ urlpatterns = [
     path('driver/requests/<int:request_id>/offer', views.make_offer_view),
     path('wallet', views.wallet_view),
     path('wallet/topup', views.topup_view),
-    path('trips/<int:trip_id>/complete', views.complete_trip_view)
+    path('trips/<int:trip_id>/complete', views.complete_trip_view),
+    path('rate/<int:trip_id>/<int:user_id>', views.rate_user_view),
+    path('profile/<int:user_id>', views.profile_view),
 ]
 
 

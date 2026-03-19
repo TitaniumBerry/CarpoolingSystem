@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
-from .models import User, Node, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction
+from .models import User, Node, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction, Rating
 from .graph import bfs, is_within_2_nodes_of_route, calculate_fare, insert_passenger_into_route
 
 from rest_framework.decorators import api_view
@@ -11,6 +11,7 @@ from rest_framework import status
 
 from allauth.account.signals import user_signed_up
 from django.dispatch import receiver
+from django.db import Avg
 
 
 from decimal import Decimal
@@ -459,3 +460,49 @@ def complete_trip_view(request, trip_id):
 
     return redirect('/trips')
 
+@login_required(login_url='/login')
+def rate_user_view(request, trip_id, user_id):
+    trip = Trip.objects.get(id=trip_id)
+    ratee = User.objects.get(id=user_id)
+
+
+    existing_rating = Rating.objects.filter(trip=trip, rater=request.user, ratee=ratee).first()
+    if existing_rating:
+        return redirect('/home')
+
+    if request.method == 'POST':
+        score = request.POST.get('score')
+        comment = request.POST.get('comment', '')
+
+        if not score or not score.isdigit() or not (1 <= int(score) <= 5):
+            return render(request, 'carpool/rate_user.html', {
+                'ratee': ratee,
+                'trip': trip,
+                'error': 'Please select a score between 1 and 5'
+            })
+
+        Rating.objects.create(
+            trip=trip,
+            rater=request.user,
+            ratee=ratee,
+            score=int(score),
+            comment=comment
+        )
+        return redirect('/home')
+
+    return render(request, 'carpool/rate_user.html', {
+        'ratee': ratee,
+        'trip': trip
+    })
+
+
+@login_required(login_url='/login')
+def profile_view(request, user_id):
+    profile_user = User.objects.get(id=user_id)
+    ratings = Rating.objects.filter(ratee=profile_user).order_by('-created_at')
+    avg_rating = ratings.aggregate(Avg('score'))['score__avg']
+    return render(request, 'carpool/profile.html', {
+        'profile_user': profile_user,
+        'ratings': ratings,
+        'avg_rating': round(avg_rating, 1) if avg_rating else None
+    })

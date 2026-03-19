@@ -65,6 +65,24 @@
                     {% endfor %}
                 </div>
             {% endif %}
+
+            {% if trip.status == 'completed' %}
+                {% for offer in trip.offers.all %}
+                    {% if offer.status == 'accepted' %}
+                        {% if forloop.first %}
+                            <hr class="divider" style="margin:1rem 0;">
+                            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.75rem;">Rate Passengers</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+                        {% endif %}
+                        <a href="/rate/{{ trip.id }}/{{ offer.carpool_request.passenger.id }}" class="btn btn-ghost btn-sm">
+                            ⭐ Rate {{ offer.carpool_request.passenger.username }}
+                        </a>
+                        {% if forloop.last %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </div>
     {% endfor %}
 {% else %}

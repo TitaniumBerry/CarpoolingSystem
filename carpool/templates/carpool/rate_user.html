@@ -1,0 +1,99 @@
+{% extends "carpool/base.html" %}
+{% block title %}Rate {{ ratee.username }} — RideShare{% endblock %}
+{% block content %}
+
+<div style="max-width:480px; margin:0 auto;">
+    <div class="page-header" style="text-align:center; margin-bottom:2rem;">
+        <div style="width:64px; height:64px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1rem;">
+            🧍
+        </div>
+        <h2>Rate {{ ratee.username }}</h2>
+        <p>How was your experience?</p>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-error">⚠ {{ error }}</div>
+    {% endif %}
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Star Rating -->
+            <div class="form-group">
+                <label>Your Rating</label>
+                <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:4px;">
+                    {% for i in "12345" %}
+                        <label style="all:unset; cursor:pointer;">
+                            <input type="radio" name="score" value="{{ i }}" style="display:none;"
+                                {% if i == "5" %}checked{% endif %}>
+                            <div class="star-option" data-val="{{ i }}" style="
+                                background:var(--surface2);
+                                border:1px solid var(--border);
+                                border-radius:var(--radius-sm);
+                                padding:0.75rem 0.5rem;
+                                text-align:center;
+                                transition:all 0.15s ease;
+                                cursor:pointer;
+                            ">
+                                <div style="font-size:1.3rem;">
+                                    {% if i == "1" %}⭐{% elif i == "2" %}⭐⭐{% elif i == "3" %}⭐⭐⭐{% elif i == "4" %}⭐⭐⭐⭐{% else %}⭐⭐⭐⭐⭐{% endif %}
+                                </div>
+                                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px; font-weight:600;">
+                                    {% if i == "1" %}Poor{% elif i == "2" %}Fair{% elif i == "3" %}Good{% elif i == "4" %}Great{% else %}Excellent{% endif %}
+                                </div>
+                            </div>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="form-group" style="margin-bottom:1.8rem;">
+                <label>Comment <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(optional)</span></label>
+                <textarea name="comment" rows="4" placeholder="Share your experience with this user..." style="
+                    width:100%;
+                    padding:0.75rem 1rem;
+                    background:var(--surface2);
+                    border:1px solid var(--border);
+                    border-radius:var(--radius-sm);
+                    color:var(--text);
+                    font-family:'DM Sans',sans-serif;
+                    font-size:0.95rem;
+                    resize:vertical;
+                    outline:none;
+                    transition:border-color 0.18s ease, box-shadow 0.18s ease;
+                " onfocus="this.style.borderColor='rgba(74,222,128,0.4)';this.style.boxShadow='0 0 0 3px rgba(74,222,128,0.08)'"
+                   onblur="this.style.borderColor='';this.style.boxShadow=''"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                ⭐ Submit Rating
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    input[type="radio"]:checked + .star-option,
+    .star-option.selected {
+        border-color: rgba(74,222,128,0.4) !important;
+        background: rgba(74,222,128,0.08) !important;
+    }
+    .star-option:hover {
+        border-color: rgba(255,255,255,0.18) !important;
+        background: var(--surface) !important;
+    }
+</style>
+
+<script>
+    document.querySelectorAll('.star-option').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.star-option').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            el.closest('label').querySelector('input[type="radio"]').checked = true;
+        });
+    });
+</script>
+
+{% endblock %}

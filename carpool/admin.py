@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Node, Edge, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction
+from .models import User, Node, Edge, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction, Rating
 
-
+admin.site.register(Rating)
 admin.site.register(User, UserAdmin)
 admin.site.register(Node)
 admin.site.register(Edge)

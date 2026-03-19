@@ -69,6 +69,24 @@
                     ⏳ Waiting for driver offers...
                 </div>
             {% endif %}
+
+            {% if req.status == 'confirmed' %}
+                {% for offer in req.offers.all %}
+                    {% if offer.status == 'accepted' %}
+                        {% if forloop.first %}
+                            <hr class="divider" style="margin:1rem 0;">
+                            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.75rem;">Rate Driver</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+                        {% endif %}
+                        <a href="/rate/{{ offer.trip.id }}/{{ offer.trip.driver.id }}" class="btn btn-ghost btn-sm">
+                            ⭐ Rate {{ offer.trip.driver.username }}
+                        </a>
+                        {% if forloop.last %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </div>
     {% endfor %}
 {% else %}
