@@ -1,0 +1,91 @@
+{% extends "carpool/base.html" %}
+{% block title %}{{ profile_user.username }}'s Profile — RideShare{% endblock %}
+{% block content %}
+
+<div style="max-width:600px; margin:0 auto;">
+
+    <!-- Profile Header -->
+    <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap;">
+        <div style="width:72px; height:72px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0;">
+            🧍
+        </div>
+        <div>
+            <h2 style="margin-bottom:6px;">{{ profile_user.username }}</h2>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="badge {% if profile_user.role == 'driver' %}badge-active{% else %}badge-completed{% endif %}">
+                    {% if profile_user.role == 'driver' %}🚗{% else %}🧍{% endif %} {{ profile_user.role }}
+                </span>
+                {% if avg_rating %}
+                    <span style="font-size:0.88rem; color:var(--text-muted);">
+                        <span style="color:var(--warning);">★</span>
+                        <strong style="color:var(--text);">{{ avg_rating }}</strong> / 5
+                        <span style="color:var(--text-dim);">({{ ratings.count }} review{{ ratings.count|pluralize }})</span>
+                    </span>
+                {% else %}
+                    <span style="font-size:0.85rem; color:var(--text-dim);">No ratings yet</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Summary Bar -->
+    {% if avg_rating %}
+        <div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+            <div style="text-align:center; flex-shrink:0;">
+                <div style="font-family:'Syne',sans-serif; font-size:3rem; font-weight:800; line-height:1; color:var(--warning);">{{ avg_rating }}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">out of 5</div>
+            </div>
+            <div style="flex:1; min-width:160px;">
+                {% for star in "54321" %}
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); width:6px;">{{ star }}</span>
+                        <span style="color:var(--warning); font-size:0.75rem;">★</span>
+                        <div style="flex:1; height:6px; background:var(--surface2); border-radius:3px; overflow:hidden;">
+                            <div style="height:100%; background:var(--warning); border-radius:3px; width:0%; transition:width 0.6s ease;"
+                                 data-star="{{ star }}" data-total="{{ ratings.count }}"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Reviews -->
+    <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin-bottom:1rem;">
+        Reviews <span style="color:var(--text-muted); font-weight:400; font-family:'DM Sans',sans-serif; font-size:0.85rem;">({{ ratings.count }})</span>
+    </div>
+
+    {% for rating in ratings %}
+        <div class="card" style="margin-bottom:0.75rem;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.9rem; flex-shrink:0;">
+                        👤
+                    </div>
+                    <div>
+                        <div style="font-weight:600; font-size:0.92rem;">{{ rating.rater.username }}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ rating.created_at }}</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:2px;">
+                    {% for i in "12345" %}
+                        <span style="color:{% if forloop.counter <= rating.score %}var(--warning){% else %}var(--text-dim){% endif %}; font-size:0.9rem;">★</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if rating.comment %}
+                <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border); font-size:0.9rem; color:var(--text-muted); line-height:1.6;">
+                    "{{ rating.comment }}"
+                </div>
+            {% endif %}
+        </div>
+    {% empty %}
+        <div class="card" style="text-align:center; padding:2.5rem; color:var(--text-muted);">
+            <div style="font-size:2rem; margin-bottom:0.8rem;">💬</div>
+            <div style="font-weight:600;">No reviews yet</div>
+        </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}
