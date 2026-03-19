@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
-from .models import User, Node, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction, Rating
+from .models import User, Node, Edge, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction, Rating
 from .graph import bfs, is_within_2_nodes_of_route, calculate_fare, insert_passenger_into_route, optimize_route_for_passengers
 
 from rest_framework.decorators import api_view
