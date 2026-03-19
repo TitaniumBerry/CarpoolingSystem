@@ -11,7 +11,7 @@ from rest_framework import status
 
 from allauth.account.signals import user_signed_up
 from django.dispatch import receiver
-from django.db import Avg
+from django.db.models import Avg
 
 
 from decimal import Decimal
