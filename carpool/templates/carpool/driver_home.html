@@ -1,0 +1,13 @@
+{% extends "carpool/base.html" %}
+{% block title %}Driver Home{% endblock %}
+{% block content %}
+    <h2>Welcome, Driver {{ user.username }}!</h2>
+    <hr>
+    <h3>Quick Links</h3>
+    <ul>
+        <li><a href="/trips/create">Publish a New Trip</a></li>
+        <li><a href="/trips">My Trips</a></li>
+        <li><a href="/driver/requests">Incoming Requests</a></li>
+        <li><a href="/wallet">My Wallet</a></li>
+    </ul>
+{% endblock %}

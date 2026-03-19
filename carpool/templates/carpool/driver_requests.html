@@ -1,0 +1,29 @@
+{% extends "carpool/base.html" %}
+{% block title %}Incoming Requests{% endblock %}
+{% block content %}
+    <h2>Incoming Carpool Requests</h2>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    {% if trip %}
+        <p>Active Trip: {{ trip.start_node }} → {{ trip.end_node }}</p>
+    {% endif %}
+    <hr>
+    {% if incoming_requests %}
+        {% for req in incoming_requests %}
+            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+                <strong>Passenger:</strong> {{ req.passenger.username }}<br>
+                <strong>Pickup:</strong> {{ req.pickup_node }}<br>
+                <strong>Dropoff:</strong> {{ req.dropoff_node }}<br>
+                <form method="get" action="/driver/requests/{{ req.id }}/offer">
+                    <button type="submit">Make Offer</button>
+                </form>
+            </div>
+        {% empty %}
+            <p>No incoming requests nearby.</p>
+        {% endfor %}
+    {% else %}
+        <p>No incoming requests nearby.</p>
+    {% endif %}
+{% endblock %}
+

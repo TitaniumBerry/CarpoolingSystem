@@ -1,0 +1,34 @@
+{% extends "carpool/base.html" %}
+{% block title %}My Requests{% endblock %}
+{% block content %}
+    <h2>My Carpool Requests</h2>
+    <a href="/requests/create">+ New Request</a>
+    <hr>
+    {% if requests %}
+        {% for req in requests %}
+            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+                <strong>{{ req.pickup_node }} → {{ req.dropoff_node }}</strong><br>
+                Status: {{ req.status }}<br>
+                <strong>Offers:</strong><br>
+                {% for offer in req.offers.all %}
+                    <div style="margin-left:20px; border-left:3px solid #aaa; padding-left:10px;">
+                        Driver: {{ offer.trip.driver.username }}<br>
+                        Detour: {{ offer.detour_nodes }} nodes<br>
+                        Fare: ${{ offer.fare }}<br>
+                        Offer Status: {{ offer.status }}<br>
+                        {% if offer.status == 'pending' and req.status == 'pending' %}
+                            <a href="/requests/confirm/{{ offer.id }}">Confirm this offer</a>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p style="margin-left:20px;">No offers yet.</p>
+                {% endfor %}
+                {% if req.status == 'pending' %}
+                    <a href="/requests/{{ req.id }}/cancel">Cancel Request</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No requests yet.</p>
+    {% endif %}
+{% endblock %}

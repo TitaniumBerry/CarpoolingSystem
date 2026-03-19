@@ -1,0 +1,12 @@
+{% extends "carpool/base.html" %}
+{% block title %}Passenger Home{% endblock %}
+{% block content %}
+    <h2>Welcome, {{ user.username }}!</h2>
+    <hr>
+    <h3>Quick Links</h3>
+    <ul>
+        <li><a href="/requests/create">Request a Carpool</a></li>
+        <li><a href="/requests">My Requests</a></li>
+        <li><a href="/wallet">My Wallet</a></li>
+    </ul>
+{% endblock %}

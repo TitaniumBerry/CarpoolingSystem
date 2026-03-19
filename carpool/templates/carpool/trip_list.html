@@ -1,0 +1,28 @@
+{% extends "carpool/base.html" %}
+{% block title %}My Trips{% endblock %}
+{% block content %}
+    <h2>My Trips</h2>
+    <a href="/trips/create">+ Publish New Trip</a>
+    <hr>
+    {% if trips %}
+        {% for trip in trips %}
+            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+                <strong>{{ trip.start_node }} → {{ trip.end_node }}</strong><br>
+                Status: {{ trip.status }}<br>
+                Max Passengers: {{ trip.max_passengers }}<br>
+                Route: 
+                {% for tn in trip.route_nodes.all %}
+                    {{ tn.node.name }}{% if not forloop.last %} → {% endif %}
+                {% endfor %}<br>
+                Current Node: {{ trip.current_node }}<br>
+                Created: {{ trip.created_at }}<br>
+                {% if trip.status == 'active' %}
+                    <a href="/trips/{{ trip.id }}/cancel">Cancel Trip</a> |
+                    <a href="/trips/{{ trip.id }}/complete">Complete Trip</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No trips yet.</p>
+    {% endif %}
+{% endblock %}

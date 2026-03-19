@@ -1,0 +1,28 @@
+{% extends "carpool/base.html" %}
+{% block title %}My Wallet{% endblock %}
+{% block content %}
+    <h2>My Wallet</h2>
+    <h3>Balance: ${{ wallet.balance }}</h3>
+    <hr>
+    <h3>Top Up</h3>
+    <form method="post" action="/wallet/topup">
+        {% csrf_token %}
+        <label>Amount ($)</label><br>
+        <input type="number" name="amount" min="1" step="0.01"><br><br>
+        <button type="submit">Top Up</button>
+    </form>
+    <hr>
+    <h3>Transaction History</h3>
+    {% if transactions %}
+        {% for t in transactions %}
+            <div style="border:1px solid #ccc; padding:8px; margin:5px 0;">
+                <strong>{{ t.transaction_type }}</strong> — 
+                ${{ t.amount }} — 
+                {{ t.created_at }} —
+                {{ t.description }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No transactions yet.</p>
+    {% endif %}
+{% endblock %}

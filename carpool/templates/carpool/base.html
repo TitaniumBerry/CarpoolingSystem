@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Carpooling{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        {% if user.is_authenticated %}
+            <span>Hello, {{ user.username }} ({{ user.role }})</span>
+            <a href="/wallet">Wallet</a> |
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a> |
+            <a href="/signup">Signup</a>
+        {% endif %}
+    </nav>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>
