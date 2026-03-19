@@ -50,6 +50,12 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google"
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://dvmcarpooling.duckdns.org',
+    'http://dvmcarpooling.duckdns.org',
+]
+
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
