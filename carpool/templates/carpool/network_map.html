@@ -1,0 +1,308 @@
+<!-- Network Map Component -->
+<style>
+    .network-map-wrapper {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-top: 1.5rem;
+    }
+    .network-map-header {
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+    }
+    .network-map-header h3 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0;
+    }
+    .map-legend {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .map-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    .map-legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    #network-map {
+        width: 100%;
+        height: 420px;
+        background: #0d1117;
+    }
+    .map-status-bar {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .map-status-bar .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+        50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+    }
+
+    /* Leaflet overrides for dark theme */
+    .leaflet-container {
+        background: #0d1117 !important;
+    }
+    .leaflet-control-zoom a {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }
+    .leaflet-control-zoom a:hover {
+        background: var(--surface2) !important;
+    }
+    .node-tooltip {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+        border-radius: 8px !important;
+        padding: 6px 10px !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.82rem !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+    }
+    .node-tooltip::before {
+        border-top-color: var(--surface) !important;
+    }
+    .leaflet-popup-content-wrapper {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-popup-tip {
+        background: var(--surface) !important;
+    }
+    .leaflet-popup-content {
+        margin: 10px 14px !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.85rem !important;
+    }
+    .leaflet-popup-close-button {
+        color: var(--text-muted) !important;
+    }
+
+    @media (max-width: 600px) {
+        #network-map { height: 320px; }
+        .map-legend { gap: 6px; }
+        .map-legend-item { font-size: 0.68rem; }
+    }
+</style>
+
+<div class="network-map-wrapper">
+    <div class="network-map-header">
+        <h3>🗺️ Network Map</h3>
+        <div class="map-legend">
+            <div class="map-legend-item">
+                <div class="map-legend-dot" style="background:#7a8499;"></div> Node
+            </div>
+            <div class="map-legend-item">
+                <div class="map-legend-dot" style="background:#4ade80;"></div> Active Route
+            </div>
+            <div class="map-legend-item">
+                <div class="map-legend-dot" style="background:#fbbf24;"></div> Pickup
+            </div>
+            <div class="map-legend-item">
+                <div class="map-legend-dot" style="background:#f87171;"></div> Dropoff
+            </div>
+            <div class="map-legend-item">
+                <div class="map-legend-dot" style="background:#22d3ee;"></div> Current
+            </div>
+        </div>
+    </div>
+    <div id="network-map"></div>
+    <div class="map-status-bar">
+        <div class="pulse-dot"></div>
+        <span id="map-status">Loading network...</span>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+(function() {
+    const map = L.map('network-map', {
+        zoomControl: true,
+        attributionControl: false,
+    }).setView([26.79, 75.54], 13);
+
+    // Dark tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    // Custom SVG icons
+    function makeIcon(color, size, symbol) {
+        return L.divIcon({
+            className: '',
+            iconSize: [size, size],
+            iconAnchor: [size/2, size/2],
+            html: `<div style="
+                width:${size}px; height:${size}px; border-radius:50%;
+                background:${color}; border:2px solid rgba(255,255,255,0.3);
+                display:flex; align-items:center; justify-content:center;
+                font-size:${size*0.45}px; color:#fff; font-weight:700;
+                box-shadow: 0 0 12px ${color}66;
+            ">${symbol || ''}</div>`
+        });
+    }
+
+    const defaultIcon = makeIcon('#4a5568', 18, '');
+    const routeIcon = makeIcon('#4ade80', 22, '');
+    const currentIcon = makeIcon('#22d3ee', 28, '📍');
+    const pickupIcon = makeIcon('#fbbf24', 24, '▲');
+    const dropoffIcon = makeIcon('#f87171', 24, '▼');
+    const passedIcon = makeIcon('rgba(74,222,128,0.3)', 16, '');
+
+    fetch('/api/network-map')
+        .then(res => res.json())
+        .then(data => {
+            const nodeMap = {};
+            const bounds = [];
+
+            // Draw edges first (underneath)
+            data.edges.forEach(edge => {
+                const from = data.nodes.find(n => n.id === edge.from);
+                const to = data.nodes.find(n => n.id === edge.to);
+                if (from && to && from.lat && from.lng && to.lat && to.lng) {
+                    L.polyline(
+                        [[from.lat, from.lng], [to.lat, to.lng]],
+                        { color: 'rgba(122,132,153,0.25)', weight: 1.5, dashArray: '4 4' }
+                    ).addTo(map);
+                }
+            });
+
+            // Identify special nodes
+            const routeNodeIds = new Set(data.active_route.map(r => r.id));
+            const passedNodeIds = new Set(data.active_route.filter(r => r.passed).map(r => r.id));
+            const currentNodeId = data.active_trip ? data.active_trip.current_node : null;
+
+            const pickupIds = new Set(data.passenger_stops.map(s => s.pickup_id));
+            const dropoffIds = new Set(data.passenger_stops.map(s => s.dropoff_id));
+
+            // Draw active route path (highlighted)
+            if (data.active_route.length > 1) {
+                const routeCoords = [];
+                data.active_route.forEach(rn => {
+                    const node = data.nodes.find(n => n.id === rn.id);
+                    if (node && node.lat && node.lng) {
+                        routeCoords.push([node.lat, node.lng]);
+                    }
+                });
+                if (routeCoords.length > 1) {
+                    // Glow effect
+                    L.polyline(routeCoords, {
+                        color: '#4ade80', weight: 6, opacity: 0.15
+                    }).addTo(map);
+                    // Main line
+                    L.polyline(routeCoords, {
+                        color: '#4ade80', weight: 2.5, opacity: 0.8
+                    }).addTo(map);
+                }
+            }
+
+            // Draw all nodes
+            data.nodes.forEach(node => {
+                if (!node.lat || !node.lng) return;
+
+                let icon = defaultIcon;
+                let zIndex = 100;
+
+                if (node.id === currentNodeId) {
+                    icon = currentIcon;
+                    zIndex = 500;
+                } else if (pickupIds.has(node.id)) {
+                    icon = pickupIcon;
+                    zIndex = 400;
+                } else if (dropoffIds.has(node.id)) {
+                    icon = dropoffIcon;
+                    zIndex = 400;
+                } else if (passedNodeIds.has(node.id)) {
+                    icon = passedIcon;
+                    zIndex = 150;
+                } else if (routeNodeIds.has(node.id)) {
+                    icon = routeIcon;
+                    zIndex = 300;
+                }
+
+                const marker = L.marker([node.lat, node.lng], {
+                    icon: icon,
+                    zIndexOffset: zIndex
+                }).addTo(map);
+
+                // Build popup content
+                let popupHtml = `<strong>${node.name}</strong>`;
+                if (node.id === currentNodeId) {
+                    popupHtml += `<br><span style="color:#22d3ee;">● Driver is here</span>`;
+                }
+                data.passenger_stops.forEach(s => {
+                    if (s.pickup_id === node.id) {
+                        popupHtml += `<br><span style="color:#fbbf24;">▲ Pickup: ${s.passenger}</span>`;
+                    }
+                    if (s.dropoff_id === node.id) {
+                        popupHtml += `<br><span style="color:#f87171;">▼ Dropoff: ${s.passenger}</span>`;
+                    }
+                });
+
+                marker.bindPopup(popupHtml);
+                marker.bindTooltip(node.name, {
+                    className: 'node-tooltip',
+                    direction: 'top',
+                    offset: [0, -12]
+                });
+
+                nodeMap[node.id] = marker;
+                bounds.push([node.lat, node.lng]);
+            });
+
+            // Fit map to bounds
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+            }
+
+            // Update status
+            const statusEl = document.getElementById('map-status');
+            const nodeCount = data.nodes.length;
+            const edgeCount = data.edges.length;
+            let statusText = `${nodeCount} nodes · ${edgeCount} connections`;
+            if (data.active_trip) {
+                statusText += ` · Active route: ${data.active_trip.start} → ${data.active_trip.end}`;
+            }
+            if (data.passenger_stops.length > 0) {
+                statusText += ` · ${data.passenger_stops.length} passenger(s)`;
+            }
+            statusEl.textContent = statusText;
+        })
+        .catch(err => {
+            document.getElementById('map-status').textContent = 'Failed to load map data';
+            console.error('Network map error:', err);
+        });
+})();
+</script>

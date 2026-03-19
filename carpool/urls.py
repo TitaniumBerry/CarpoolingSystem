@@ -23,6 +23,7 @@ urlpatterns = [
     path('trips/<int:trip_id>/complete', views.complete_trip_view),
     path('rate/<int:trip_id>/<int:user_id>', views.rate_user_view),
     path('profile/<int:user_id>', views.profile_view),
+    path('api/network-map', views.network_map_api),
 ]
 
 

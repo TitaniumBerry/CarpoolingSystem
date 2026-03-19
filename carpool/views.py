@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from .models import User, Node, Trip, TripNode, CarpoolRequest, CarpoolOffer, Wallet, Transaction, Rating
-from .graph import bfs, is_within_2_nodes_of_route, calculate_fare, insert_passenger_into_route
+from .graph import bfs, is_within_2_nodes_of_route, calculate_fare, insert_passenger_into_route, optimize_route_for_passengers
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -12,6 +12,7 @@ from rest_framework import status
 from allauth.account.signals import user_signed_up
 from django.dispatch import receiver
 from django.db.models import Avg
+from django.http import JsonResponse
 
 
 from decimal import Decimal
@@ -228,38 +229,81 @@ def confirm_offer_view(request, offer_id):
     offer.carpool_request.save()
 
     CarpoolOffer.objects.filter(carpool_request= offer.carpool_request).exclude(id=offer_id).update(status='rejected')
+    trip = offer.trip
+    if trip.status == 'active':
+        _optimize_trip_route(trip)
 
     return redirect('/requests')
 
+def _optimize_trip_route(trip):
+    accepted_offers = CarpoolOffer.objects.filter(
+        trip = trip, status= 'accepted'
+    ).select_related('carpool_request__pickup_node', 'carpool_request__dropoff_node')
 
-@login_required(login_url='/login')
-def driver_requests_view(request):
-    if not request.user.is_driver():
-        return redirect('/home')
-
-    try:
-        trip = Trip.objects.filter(driver=request.user, status='active').order_by('-created_at').first()
-    except Trip.DoesNotExist:
-        return render(request, 'carpool/driver_requests.html', {
-            'error' : 'You have no active trip',
-            'incoming_requests' : [] 
-        })
+    if accepted_offers.count() < 2:
+        return
     
-    remaining_trip_nodes = TripNode.objects.filter(trip=trip, passed=False).select_related('node')
-    remaining_nodes = [tn.node for tn in remaining_trip_nodes]
+    passenger_stops = []
 
-    all_requests = CarpoolRequest.objects.filter(status='pending')
-
-    incoming_requests = []
-
-    for cr in all_requests:
-        pickup_ok = is_within_2_nodes(cr.pickup_node, remaining_nodes)
-        dropoff_ok = is_within_2_nodes(cr.dropoff_node, remaining_nodes)
-
-        if pickup_ok and dropoff_ok:
-            incoming_requests.append(cr)
+    for off in accepted_offers:
+        passenger_stops.append((
+            off.carpool_request.pickup_node,
+            off.carpool_request.dropoff_node,
+            off.id
+        ))
     
-    return render(request, 'carpool/driver_requests.html', {'trip' : trip, 'incoming_requests' : incoming_requests})
+    remaining_trip_nodes = TripNode.objects.filter(trip=trip, passed=False).select_related('node').order_by('order')
+
+    if not remaining_trip_nodes.exists():
+        return
+
+    current_start = remaining_trip_nodes.first().node
+    destination = trip.end_node
+
+    optimized_route , optimized_order = optimize_route_for_passengers(current_start, destination, passenger_stops)
+
+    if optimized_route is None:
+        return
+    
+    passed_nodes = TripNode.objects.filter(trip = trip, passed= True)
+    offset = passed_nodes.count()
+
+    TripNode.objects.filter(trip = trip, passed= False).delete()
+
+    for i, node in enumerate(optimized_route):
+        TripNode.objects.create(trip = trip, node = node, order = offset + i, passed= False)
+    
+
+
+
+# @login_required(login_url='/login')
+# def driver_requests_view(request):
+#     if not request.user.is_driver():
+#         return redirect('/home')
+
+#     try:
+#         trip = Trip.objects.filter(driver=request.user, status='active').order_by('-created_at').first()
+#     except Trip.DoesNotExist:
+#         return render(request, 'carpool/driver_requests.html', {
+#             'error' : 'You have no active trip',
+#             'incoming_requests' : [] 
+#         })
+    
+#     remaining_trip_nodes = TripNode.objects.filter(trip=trip, passed=False).select_related('node')
+#     remaining_nodes = [tn.node for tn in remaining_trip_nodes]
+
+#     all_requests = CarpoolRequest.objects.filter(status='pending')
+
+#     incoming_requests = []
+
+#     for cr in all_requests:
+#         pickup_ok = is_within_2_nodes(cr.pickup_node, remaining_nodes)
+#         dropoff_ok = is_within_2_nodes(cr.dropoff_node, remaining_nodes)
+
+#         if pickup_ok and dropoff_ok:
+#             incoming_requests.append(cr)
+    
+#     return render(request, 'carpool/driver_requests.html', {'trip' : trip, 'incoming_requests' : incoming_requests})
 
 
 @login_required(login_url='/login')
@@ -505,4 +549,68 @@ def profile_view(request, user_id):
         'profile_user': profile_user,
         'ratings': ratings,
         'avg_rating': round(avg_rating, 1) if avg_rating else None
+    })
+
+
+@login_required(login_url='/login')
+def network_map_api(request):
+    """Returns JSON with all nodes, edges, and active trip route for the map."""
+    nodes = Node.objects.all()
+    edges = Edge.objects.all().select_related('from_node', 'to_node')
+
+    nodes_data = [{'id': n.id, 'name': n.name, 'lat': n.latitude, 'lng': n.longitude} for n in nodes]
+    edges_data = [{'from': e.from_node.id, 'to': e.to_node.id} for e in edges]
+
+    active_route = []
+    active_trip_info = None
+    pickup_dropoff_nodes = []
+
+    if request.user.is_driver():
+        trip = Trip.objects.filter(driver=request.user, status='active').order_by('-created_at').first()
+        if trip:
+            route_nodes = TripNode.objects.filter(trip=trip).select_related('node').order_by('order')
+            active_route = [{'id': tn.node.id, 'name': tn.node.name, 'passed': tn.passed} for tn in route_nodes]
+            active_trip_info = {
+                'id': trip.id, 'start': trip.start_node.name, 'end': trip.end_node.name,
+                'current_node': trip.current_node.id if trip.current_node else None,
+            }
+            for off in CarpoolOffer.objects.filter(trip=trip, status='accepted').select_related(
+                'carpool_request__pickup_node', 'carpool_request__dropoff_node', 'carpool_request__passenger'
+            ):
+                pickup_dropoff_nodes.append({
+                    'pickup_id': off.carpool_request.pickup_node.id,
+                    'pickup_name': off.carpool_request.pickup_node.name,
+                    'dropoff_id': off.carpool_request.dropoff_node.id,
+                    'dropoff_name': off.carpool_request.dropoff_node.name,
+                    'passenger': off.carpool_request.passenger.username,
+                })
+
+    elif request.user.is_passenger():
+        confirmed_request = CarpoolRequest.objects.filter(
+            passenger=request.user, status='confirmed'
+        ).order_by('-created_at').first()
+        if confirmed_request:
+            accepted_offer = CarpoolOffer.objects.filter(
+                carpool_request=confirmed_request, status='accepted'
+            ).select_related('trip').first()
+            if accepted_offer:
+                trip = accepted_offer.trip
+                route_nodes = TripNode.objects.filter(trip=trip).select_related('node').order_by('order')
+                active_route = [{'id': tn.node.id, 'name': tn.node.name, 'passed': tn.passed} for tn in route_nodes]
+                active_trip_info = {
+                    'id': trip.id, 'start': trip.start_node.name, 'end': trip.end_node.name,
+                    'current_node': trip.current_node.id if trip.current_node else None,
+                }
+                pickup_dropoff_nodes.append({
+                    'pickup_id': confirmed_request.pickup_node.id,
+                    'pickup_name': confirmed_request.pickup_node.name,
+                    'dropoff_id': confirmed_request.dropoff_node.id,
+                    'dropoff_name': confirmed_request.dropoff_node.name,
+                    'passenger': request.user.username,
+                })
+
+    return JsonResponse({
+        'nodes': nodes_data, 'edges': edges_data,
+        'active_route': active_route, 'active_trip': active_trip_info,
+        'passenger_stops': pickup_dropoff_nodes,
     })

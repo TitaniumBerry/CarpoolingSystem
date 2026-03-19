@@ -1,5 +1,6 @@
 from collections import deque
 from .models import Edge
+from itertools import permutations
 
 def bfs(start_node, end_node):
 
@@ -109,6 +110,82 @@ def insert_passenger_into_route(route, pickup_node, dropoff_node):
     
     return best_route
 
+
+def bfs_distance(start_node, end_node):
+    if start_node == end_node:
+        return 0    
+
+
+    queue = deque()
+    queue.append((start_node, 0))
+    visited = {start_node.id}
+
+    while queue:
+        current, dist = queue.popleft()
+        for edge in Edge.objects.filter(from_node=current).select_related('to_node'):
+            neighbour = edge.to_node
+            if neighbour.id in visited:
+                continue
+            if neighbour == end_node:
+                return dist + 1
+            
+            visited.add(neighbour.id)
+            queue.append((neighbour, dist + 1))
+
+    return None
+
+def optimize_route_for_passengers(start_node, end_node, passenger_stops):
+    if not passenger_stops:
+        return bfs(start_node, end_node), []
     
+    pickups = [(ps[0], i, 'pickup') for i, ps in enumerate(passenger_stops)]
+    dropoffs = [(ps[1], i, 'dropoffs') for i, ps in enumerate(passenger_stops)]
+    all_stops = pickups + dropoffs
+
+    best_route = None
+    best_length = float('inf')
+    best_order = None
+
+    for perm in permutations(all_stops):
+        valid = True
+        pickup_seen = set()
+        
+        for node, passenger_idx, stop_type in perm:
+            if stop_type == 'pickup':
+                pickup_seen.add(passenger_idx)
+            elif stop_type == 'dropoff':
+                if passenger_idx not in pickup_seen:
+                    valid = False
+                    break
+
+        if not valid:
+            continue
+
+
+        waypoints = [start_node] + [s[0] for s in perm] + [end_node]
+        full_route = []
+        route_valid = True
+
+
+        for k in range(len(waypoints) - 1):
+            segment = bfs(waypoints[k], waypoints[k+1])
+            if segment is None:
+                route_valid = False
+                break
+            if full_route:
+                full_route.extend(segment[1:])
+            else:
+                full_route = segment
+
+        if not route_valid:
+            continue
+        
+        if len(full_route) < best_length:
+            best_length = len(full_route)
+            best_route = full_route
+            best_order = list(perm)
+        
+    return best_route, best_order
+
 
 
