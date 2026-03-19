@@ -146,8 +146,21 @@ class Transaction(models.Model):
     
 
 
+class Rating(models.Model):
+    trip = models.ForeignKey(Trip, on_delete= models.CASCADE, related_name='ratings')
+    rater = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ratings_given')
+    ratee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ratings_received')
+    score = models.PositiveIntegerField()
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-
+    class Meta:
+        unique_together = ('trip', 'rater', 'ratee')
+    
+    def __str__(self):
+        return f"{self.rater} rated {self.ratee} {self.score}/5 for trip {self.trip.id}"
+    
+    
 
         
     
